@@ -1,0 +1,406 @@
+<?php
+
+/**
+ * Implements hook_help().
+ */
+function tracking_help($path, $arg){
+    global $base_url;
+    $out='';
+    switch ($path) {
+        case "admin/help#tracking":
+            $images=scandir(Tracking::imagefilepath());
+            $imgstr='';
+            foreach($images as $image){
+                if(preg_match("/\.[jpg|gif|png]/i",$image))
+                $imgstr.='<tr><td> - '.$image.'</td><td><img src="'.Tracking::imageurlpath().$image.'" height="15"/></td></tr>';
+            }
+            $out = t('
+                <h2>About Tracking Module</h2>
+                <p>The tracking module records when a key image has been downloaded from the website and when an image or link has been clicked.</p>
+                <dl>
+                    <dt>Usage</dt>
+                    <dd>The module can be used to monitor when an image which is embedded in the HTML of a page, iframe or email has been downloaded
+                    (and presumably viewed) or when an image or link has been clicked.
+                    This allows the measuring of the effectiveness of campaigns or general efficiency directing a user to view something or achieve a goal.
+                    The tracking links can be used anywhere and on any site even ones external to tradermade (e.g. place the link in a mail chimp email) 
+                    </dd>
+                    <dt>Track Views</dt>
+                    <dd>The module interprets a url posted to the sever which is populated with various parameters, and records those parameters 
+                    in the database before returnin an image to the user.
+                    <p><b>View Tracking Code</b><br>
+                    The code to insert to track views is as follows:<br>
+                    <pre><tt>%server/mail/open/userid/campaign/source/image</tt></pre>
+                    where:<br>
+                    <table>
+                    <tr>
+                    <td valign="top" style="vertical-align: top !important"><b>userid</b></td>
+                    <td>The numeric UID for the user.  The value 0 can be used if the user is unknown, and maps therefore to anonymous</td>
+                    </tr>
+                    <tr>
+                    <td valign="top" style="vertical-align: top !important"><b>campaign</b></td>
+                    <td>A string for the campaign so reports can be campaign specific.  Any HTML-safe (escaped) string can be used.</td>
+                    </tr>
+                    <tr>
+                    <td valign="top" style="vertical-align: top !important"><b>source</b></td>
+                    <td>A field to define the location of the link - use a 3 letter convention where web=on website, eml=email, ext=external website, sf=salesforce.  However, any string can be used.</td>
+                    </tr>
+                    
+                    <tr>
+                    <td valign="top" style="vertical-align: top !important"style="vertical-align: top !important"><b>image</b></td>
+                    <td>The image filename.  The image must already exist in the images subfolder (in this case %imagefilepath).<br><br>
+                    The images which are presently available in that folder are:<br><table>!imagelist</table><br>
+                    <b>Note:</b><ol>
+                    <li>Images above are zoomed to format nicely on this page - actual size will vary.</li>
+                    <li>You may add any image that you choose to the folder.</li>
+                    <li>The tran.gif image is a single pixel transparent gif image, so that nothing will appear on the page being tracked.</li>
+                    </ol></td>
+                    </tr>
+                    </table>
+                    for example:
+                    <pre>View URL: <tt>%server/mail/open/1/registration email/web/tradermade.png</tt></pre>
+                    <pre>Actual HTML: <code>< img src="%server/mail/open/1/registration email/web/tradermade.png" alt="FXNavigator Research" style="css:value"/></code></pre>
+                    </p>
+                    </dd>
+                    <dt>Track Clicks</dt>
+                    <dd>The module interprets a url posted to the sever which is populated with various parameters, and records those parameters 
+                    in the database before redirecting to the desired url.  
+                    <p><b>Click Tracking Code</b><br>
+                    The code to insert to track link clicks is as follows:<br>
+                    <pre><tt>%server/mail/clicker/userid/campaign/source/click?url=fullurl&src=email</tt></pre>
+                    where:<br>
+                    <table>
+                    <tr>
+                    <td valign="top" style="vertical-align: top !important"><b>userid</b></td>
+                    <td>The numeric UID for the user.  The value 0 can be used if the user is unknown, and maps therefore to anonymous</td>
+                    </tr>
+                    <tr>
+                    <td valign="top" style="vertical-align: top !important"><b>campaign</b></td>
+                    <td>A string for the campaign so reports can be campaign specific.  Any HTML-safe (escaped) string can be used.</td>
+                    </tr>
+                    <tr>
+                    <td valign="top" style="vertical-align: top !important"><b>source</b></td>
+                    <td>A field to define the location of the link - use a 3 letter convention where web=on website, eml=email, ext=external website, sf=salesforce.  However, any string can be used.</td>
+                    </tr>
+                    <tr>
+                    <td valign="top" style="vertical-align: top !important"><b>click</b></td>
+                    <td>The string "click" (this is for future expansion into other tracking event types).</td>
+                    </tr>
+                    <tr>
+                    <td valign="top" style="vertical-align: top !important"><b>fullurl</b></td>
+                    <td>The full url to which the user is to be directed.  If it contains a query, then the string must be urlencoded.</td>
+                    </tr>
+                    <td valign="top" style="vertical-align: top !important"><b>email</b></td>
+                    <td>[optional] The users email to be stored along with the click information.</td>
+                    </tr>
+                    </table>
+                    for example:
+                    <pre>Click Code: <tt>%server/mail/clicker/1/registration email/web/click?url=http://www.tradermade.com/article/123456</tt></pre>
+                    <pre>Actual HTML:<code>
+                    < a href="%server/mail/clicker/1/registration email/web/click?url=http://www.tradermade.com/article/123456">
+                     Click here for pricing
+                    < /a>
+                    </code></pre>
+                    </p>
+                    </dd>
+                    </dd>
+                    <dt>Reporting</dt>
+                    <dd>Tracking data is stored in the database and can be analysed using the views module.
+                    There are basic reports available from <a href="http://fxnavigator.local/admin/reports/clicktracking">http://fxnavigator.local/admin/reports/clicktracking</a>. 
+                    </dd>
+                </dl>      
+                <b>Notes:</b>
+                <ol>
+                    <li>You can include both an open and click link:
+                    <pre>Actual HTML:<code>
+                    < a href="%server/mail/clicker/1/registration email/web/click?url=http://www.tradermade.com/article/123456">
+                      < img src="%server/mail/open/1/registration email/web/tradermade.png" alt="FXNavigator Research" style="css:value"/>
+                    < /a>
+                    </code></pre>This will show a clickable image which records both when it is shown and also when it is clicked.
+                    
+                    </li>
+                    <li>If the views expose tables module is loaded (http://fxnavigator.local/admin/structure/views/expose_tables) 
+                    then you can make the database tables tm_tracker and tm_tracker_log available to the views module at admin/structure/views</li>
+                </ol>
+            ', array(
+                "%server" => $base_url,
+                "%imagefilepath" => Tracking::imagefilepath(),
+                "!imagelist" => $imgstr
+                )
+            );
+            break;
+    }
+    return $out;}
+
+/**
+ * Implements hook_init().
+ */
+function tracking_init(){
+
+    // ensure the associated class object is included ...
+    if(!class_exists("tracking")) require "class.tracking.inc";
+}
+
+/**
+ * Implements hook_menu().
+ */
+function tracking_menu(){
+
+    $items=array();
+
+    $items['mail/open/%/%/%/%'] = array(             //param1 = contactID, param2=campaignID, param3=source(sf/web/ext), param4=image
+        'title'             => t('tracker'),        //  also can capture argument mail/open/%/%/%/%?src=XX@XX where XX@XX=email address
+        'description'       => 'Email Tracker',
+        'page callback'     => 'tracking_tracker',
+        'page arguments'    => array(1,1,2,3,4,5),
+        'type'              => MENU_LOCAL_TASK,
+        'access callback'  => TRUE,
+    );
+    $items['mail/clicker/%/%/%/click'] = array(                   //param1=userid, param2=extCampaign $_POST[dest]=URL ..etc
+        'title'             => t('tracker'),
+        'description'       => 'Email Click Through',
+        'page callback'     => 'tracking_clickthrough',
+        'page arguments'    => array(1,1,2,3,4,5),
+        'type'              => MENU_LOCAL_TASK,
+        'access callback'  => TRUE,
+    );
+
+    // tab which appears in the tm_utilities module admin pages
+    $items['admin/config/system/tm-utilities/tracking'] = array(
+        'title'             => 'Tracking Reporting',
+        'description'       => 'Provides information on campaign opens and clicks',
+        'page callback'     => 'tracking_reporting',
+        'page arguments'    => array('','"'.TrackingReporting::TRACKINGREPORTING_DETAIL_LEVEL0.'"'),
+        'type'              => MENU_LOCAL_TASK,
+        'access callback'   => '_tracking_access',
+        "weight"            => 5
+    );
+
+    $items['admin/reports/clicktracking'] = $items['admin/config/system/tm-utilities/tracking'];
+    $items['admin/reports/clicktracking']['type'] = MENU_NORMAL_ITEM;               // makes it show in the reports menu tab
+
+    $items['admin/reports/clicktracking/%/%/%/%'] = array(             //param1 = type, param2=campaignID, param3=source(sf/web/ext)
+        'title'             => t('Tracking Reporting -Detail'),
+        'description'       => 'Provides detailed drill down information on campaign opens and clicks',
+        'page callback'     => 'tracking_reporting',
+        'page arguments'    => array(1,3,4,5,6),
+        'type'              => MENU_CALLBACK,
+        'access callback'   => '_tracking_access',
+        "weight"            => 0
+    );
+    return $items;
+}
+
+/**
+ * Implements hook_permission()
+ * @return array
+ */
+function tracking_permission() {
+    /**
+    Drupal hook_perm
+     *  Valid permissions for this module
+     *  @return array An array of valid permissions for the module
+     */
+    return array(
+        'tracking reporting' => array(
+            'title' => t('View Tracking Reports'),
+            'description' => t('Users can view the reports generated from Tracking codes and links.')),
+    );
+}
+
+/**
+ * Determine users permission for menu
+ * @return bool
+ */
+function _tracking_access(){
+    if (user_access('tracking reporting')) return TRUE;
+}
+
+/**
+ * Implements hook_form_alter().
+ * @return array
+ */
+function tracking_form_alter(&$form, &$form_state, $form_id){
+    switch($form_id) {
+        case "fxnavigator_admin":
+            $form = tracking_fxnavigator_admin($form);
+            break;
+    }
+    return $form;
+}
+
+/**
+ * Called from FXNavigator_admin function...
+ * @param array $form
+ * @return array
+ */
+function tracking_fxnavigator_admin(&$form){
+    $form['FXNavReporting']['tracking'][] = array(
+        "#markup" => t("<div style='margin-left:20px; margin-top:7px'>
+                    <span><i class='fa fa-dot-circle-o'></i> </span>
+                    <a href='/admin/config/system/tm-utilities/tracking'>
+                        TraderMade Link Tracking
+                    </a><br/>
+                    <div style='margin-left:40px'>View links clicked and opened</div>
+                    </div>")
+    );
+
+    return $form;
+}
+
+/*** MENU FUNCTIONS ****/
+
+/**
+ * Called from menu /mail/open/./././.
+ */
+function tracking_tracker(){
+
+    global $base_url;
+
+    if(!class_exists("tracking")) require "class.tracking.inc";
+
+    $arg = func_get_args();
+    // record the impression to the database
+    Tracking::track_impression($arg[2], $arg[3], $arg[4]);
+    // now return the image requested
+    $file = (!$arg[5] ? "tradermade.png" : $arg[5]);
+    ob_clean();
+    header('Content-Type: image/png');
+    header('Pragma: public');   // required
+    header('Expires: 0');       // no cache
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Cache-Control: private',false);
+    header('Content-Disposition: attachment; filename="'.$file.'"');
+    header('Content-Transfer-Encoding: binary');
+    header('Content-Length: '.filesize( Tracking::imagefilepath().$file));   // provide file size
+    @readfile(Tracking::imageurlpath().$file);      // push it out
+
+}
+
+/**
+ * Called from menu mail/clicker/./././click
+ */
+function tracking_clickthrough(){
+
+    if(!class_exists("tracking")) require "class.tracking.inc";
+    $arg = func_get_args();
+
+    // can only redirect if we have a url to send to...
+    if(!empty($_REQUEST['url'])) {
+
+        // if a full url (i.e. prefixed http:// is not provided, then make relative to this site)
+        $url = $_REQUEST['url'];
+        if(stripos($url, "http://") === false && stripos($url, "https://") === false) {
+            if(substr($url,0,1)!='/') $url = "/".$url;
+            $url = "http://".$_SERVER['HTTP_HOST'].$url;
+        }
+
+        // record the click to the database
+        Tracking::track_click($arg[2], $arg[3], $arg[4], $url);
+
+        // redirect to the requested url
+        ob_clean();
+        if (!empty($arg[5]) && !empty($url)) header("Location: ".$url);
+    }
+}
+
+/**
+ * Called from admin/config/system/tm-utilities/tracking-detail/././.
+ * Called from admin/reports/clicktracking and admin/config/system/tm-utilities/tracking
+ * Creates a summary or detail/drill-down report page
+ * @return string
+ */
+function tracking_reporting(){
+
+    if(!class_exists("tracking")) require "class.tracking.inc";
+
+    // decide the filtering
+    $arg = func_get_args();
+    $mode = $arg[1];
+
+    //work out any sorting
+    if(isset($_REQUEST['sort'])){
+        switch($_REQUEST['order']){
+            case 'Source': $col="source"; break;
+            case 'User': $col="user_id"; break;
+            case 'URL': $col="destinationURL"; break;
+            case 'Events': $col="count"; break;
+            case 'Campaign': $col="campaign_id"; break;
+            case 'Activity': $col="track_type"; break;
+            case 'Last date': $col="timestamp"; break;
+            case 'Latest Event Date': $col="timestamp"; break;
+        }
+    }
+    else{$_REQUEST['sort']="ASC";}
+
+    drupal_add_css('https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css', array("type" => "external", "group" => CSS_DEFAULT));
+
+    // create the tracking reporting object
+    $trackingReporting = new TrackingReporting();
+
+    switch($mode){
+
+        case TrackingReporting::TRACKINGREPORTING_DETAIL_LEVEL0:
+
+            if(!isset($col)) $col = "campaign_id";
+
+            $report = $trackingReporting->tracking_reporting($col, $_REQUEST['sort']);
+
+            $output="<h1>Tracker Summary Report</h1><h3>Shows activity and sources for clicks and opens for various campaigns</h3>";
+
+            break;
+
+        case TrackingReporting::TRACKINGREPORTING_DETAIL_LEVEL1:
+
+            if(!isset($col)) $col="user_id";
+
+            $conditions = array(
+                'campaign_id' => $arg[3],
+                'track_type' => $arg[2],
+                'source' => $arg[4]);
+
+            // grab the report data
+            $report = $trackingReporting->tracking_reporting_detail(TrackingReporting::TRACKINGREPORTING_DETAIL_LEVEL1, $conditions, $col, $_REQUEST['sort']);
+
+            $output = "<h1>Tracker Campaign Report</h1><h3>Showing " . $conditions['source'] . " " . $conditions['track_type'] . "s for campaign '" . $conditions['campaign_id'] . "'</h3>";
+
+            break;
+
+        case TrackingReporting::TRACKINGREPORTING_DETAIL_LEVEL2:
+
+            $output="<h1>Tracker Drill-down Report</h1>";
+
+            switch($arg[2]){
+                case 'click':
+
+                    if(!isset($col)) $col="timestamp";
+
+                    $conditions = array(
+                        'campaign_id'=>$arg[4],
+                        'track_type'=>$arg[2],
+                        'source'=>$arg[5],
+                        'tt.user_id'=>$arg[3]
+                    );
+
+                    // grab the report data
+                    $report = $trackingReporting->tracking_reporting_detail(TrackingReporting::TRACKINGREPORTING_DETAIL_LEVEL2, $conditions,$col, $_REQUEST['sort']);
+                    $output .= "<h3>Drill-down showing click URL destinations for user ".$report->username." in campaign '".$conditions['campaign_id']."' </h3>";
+                    break;
+            }
+
+            break;
+    }
+
+    // create the report table
+    $output .= theme_table(array(
+        "header" => $report->header_rows,
+        "rows" => $report->data_rows,
+        "attributes" => array('style' => 'width: 99%;', 'id' => 'tracking-report'),
+        "caption" => null,
+        "colgroups" => null,
+        "sticky" => null,
+        "empty" => "No tracking data captured yet."
+    ));
+    // put some explanation at the bottom of the report
+    $output .= $trackingReporting->makeFooter();
+    return $output;
+}
