@@ -1,0 +1,98 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function tracking_install(){}
+/**
+ * Implements hook_uninstall().
+ */
+function tracking_uninstall(){}
+/**
+ * Implements hook_schema().
+ */
+function tracking_schema(){
+
+    $schema=null;
+
+    if(!db_find_tables('%tm_tracker')){
+        $schema['tm_tracker'] = array(
+            'description' => t('Table to store tracking information from image displays and link clicks'),
+            'fields' => array(
+                'recid' => array(
+                    'type' => 'serial',
+                    'unsigned' => true,
+                    'not null' => true,
+                    'length' => 11
+                ),
+                'track_type' => array(
+                    'type' => 'varchar',
+                    'not null' => true,
+                    'length' => 5
+                ),
+                'source' => array(
+                    'type' => 'varchar',
+                    'not null' => true,
+                    'length' => 3
+                ),
+                'campaign_id' => array(
+                    'type' => 'varchar',
+                    'length' => 45
+                ),
+                'user_id' => array(
+                    'type' => 'varchar',
+                    'length' => 45
+                ),
+                'email' => array(
+                    'type' => 'varchar',
+                    'length' => 100
+                ),
+                'timestamp' => array(
+                    'mysql_type' => 'timestamp',
+                    'not null' => true
+                    //'default' => 'CURRENT_TIMESTAMP'
+                    //ON UPDATE CURRENT_TIMESTAMP',
+                ),
+                'destinationURL' => array(
+                    'type' => 'varchar',
+                    'length' => 250
+                ),
+                'ipaddress' => array(
+                    'type' => 'varchar',
+                    'length' => 16
+                ),
+                'hosttype' => array(
+                    'type' => 'varchar',
+                    'length' => 500
+                ),
+                'count' => array(
+                    'type' => 'int',
+                    'not null' => true,
+                    'default'=> 1,
+                    'length' => 11
+                ),
+            ),
+            'primary key' => array('recid'),
+            'unique keys' => array('validate' => array('track_type','source','campaign_id','user_id'))
+        );
+    }
+    if(isset($schema)) return $schema;
+}
+
+/**
+ * Implements hook_enable().
+ */
+function tracking_enable(){
+    // make sure that tracking module sits below/after the tm_utilities module
+    $weight = db_query("SELECT weight FROM {system} WHERE name = 'tm_utilities'")->fetchField();
+    db_update('system')
+        ->fields(array('weight' => $weight+5))
+        ->condition('name', 'tracking', '=')
+        ->execute();
+}
+/**
+ * Implements hook_disable().
+ */
+function tracking_disable(){
+
+}
