@@ -1,0 +1,66 @@
+tracking.admin:
+  path: '/admin/config/system/tracking'
+  defaults:
+    _title: 'Tracking Admin'
+    _form: '\Drupal\tracking\Form\trackingSettingsForm'
+  requirements:
+   _permission: 'tracking reporting'
+
+tracking.open:
+    path: '/reimage/{userid}/{campaign}/{source}/{image}'
+    defaults:
+      _controller: '\Drupal\tracking\Controller\TrackingController::captureView'
+      _title: 'view tracking'
+      userid: ''
+      campaign: ''
+      source: ''
+      image: 'tran.jpg'
+    requirements:
+      _access: 'TRUE'
+
+tracking.click:
+    path: '/redirect/{type}/{userid}/{campaign}/{source}'
+    defaults:
+      _controller: '\Drupal\tracking\Controller\TrackingController::captureClick'
+      _title: 'click tracking'
+      type: 'click'
+      userid: ''
+      campaign: ''
+      source: ''
+    requirements:
+      _access: 'TRUE'
+
+tracking.delete:
+    path: '/admin/secure/trackingdelete/{type}/{userid}/{campaign}/{source}'
+    defaults:
+      _controller: '\Drupal\tracking\Controller\TrackingController::deleteData'
+      _title: 'click management'
+      type: ''
+      userid: ''
+      campaign: ''
+      source: ''
+    requirements:
+      _permission: 'tracking reporting'
+
+## this is a link on the reports page
+tracking.reportSummary:
+  path: '/admin/reports/clicktracking'
+  defaults:
+    _title: 'Tracking Reporting'
+    _controller: '\Drupal\tracking\Controller\TrackingController::report'
+  requirements:
+    _permission: 'tracking reporting'
+
+# This is a link on the reports page.
+tracking.reportDetail:
+  path: '/admin/reports/clicktracking/{mode}/{type}/{campaign}/{source}/{user}'
+  defaults:
+    _title: 'Tracking Reporting'
+    _controller: '\Drupal\tracking\Controller\TrackingController::report'
+    mode: ''
+    type: ''
+    campaign: ''
+    source: ''
+    user: ''
+  requirements:
+    _permission: 'tracking reporting'

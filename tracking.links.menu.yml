@@ -1,0 +1,12 @@
+## formerly MENU_NORMAL_ITEM, this is a tab..
+tracking.admin:
+  title: 'Impression and Click tracking'
+  description: 'Administer the Tracking module to track impressions and clicks'
+  parent: system.admin_config_system
+  route_name: tracking.admin
+
+tracking.reportSummary:
+  route_name: tracking.reportSummary
+  title: 'Tracking Report'
+  description: 'Overview of tracking view/click events.'
+  parent: system.admin_reports

@@ -1,0 +1,9 @@
+name: 'Tracking'
+type: module
+description: 'Tracks the display of HTML (e.g. an email) and the action of clicking on a link'
+package: TraderMade Utilities
+core: 8.x
+version: 8.x.1.0
+project: tm_utilities
+dependencies:
+  - drupal:views

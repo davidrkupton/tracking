@@ -1,0 +1,5 @@
+font-awesome:
+  version: 4.7.0
+  css:
+    base:
+      https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css: {type: external, minified: true}
