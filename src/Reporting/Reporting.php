@@ -14,6 +14,7 @@ namespace Drupal\tracking\Reporting;
  */
 
 use Drupal\Component\Render\FormattableMarkup;
+use Drupal\Core\Url;
 
 class Reporting extends Tracking {
 
@@ -39,7 +40,9 @@ class Reporting extends Tracking {
    */
   public function tracking_reporting($column = "campaign_id", $order="ASC"){
 
-	if(!isset($column)) $column = "campaign_id";
+	global $base_url;
+
+    if(!isset($column)) $column = "campaign_id";
 	if(!isset($order))  $order = "ASC";
 
 	$this->header_rows = array(
@@ -69,17 +72,25 @@ class Reporting extends Tracking {
 		$dataRow['activity'] = new FormattableMarkup('<i class="fa '.($row->track_type=='click'?'fa-hand-o-down':'fa-eye').'"></i> '.$row->track_type, array());
 		$dataRow['events'] = $row->count . " " . $row->track_type . "s";
 		$dataRow['last'] = date("D d-M-Y H:i", strtotime($row->timestamp));
-		$dataRow['actions'] = new FormattableMarkup('<a href=":link" title=":tip"><i class="fa fa-times" style="color:red"></i>&nbsp;Delete Campaign :type\'s</a> |&nbsp;<a href=":link2" title=":tip2" style="display:inline-block"><i class="fa fa-search"></i>&nbsp;Drill-down</a>',
-		  array(
-			':type' => $row->track_type,
-			':link' => '/admin/secure/trackingdelete/' . $row->track_type . '/null/' . $row->campaign_id . '/' . $row->source,
-			':tip' => 'Delete ALL the tracked '.$row->track_type.'\'s for this campaign ('.$row->campaign_id.')',
-			':link2' => '/admin/reports/clicktracking/' . self::TRACKINGREPORTING_DETAIL_LEVEL1 . '/' . $row->track_type . '/' . $row->campaign_id . '/' . $row->source,
-			':tip2' => 'Report on '. $row->source.' originated '.$row->track_type.'\'s for this campaign ('.$row->campaign_id.')'
-		  )
+		$btn = array(
+		  '#type' => 'form',
+		  'button' => array(
+			'#type'=>'dropbutton',
+			'#links'=> array(
+			  'details'=>array(
+				'title'=>new FormattableMarkup('<i class="fa fa-search"></i> Details', array()),
+				'url'=>Url::fromUri($base_url.'/admin/reports/clicktracking/' . self::TRACKINGREPORTING_DETAIL_LEVEL1 . '/' . $row->track_type . '/' . $row->campaign_id . '/' . $row->source),
+			  ),
+			  'delete'=>array(
+				'title'=>new FormattableMarkup('<i class="fa fa-times" style="color:red"></i> Delete Entry', array()),
+				'url'=>Url::fromUri($base_url.'/admin/secure/trackingdelete/' . $row->track_type . '/null/' . $row->campaign_id . '/' . $row->source),
+			  ),
+			),
+		  ),
 		);
+		$dataRow['actions'] =  \Drupal::service('renderer')->render($btn);
 
-	  $this->data_rows[] = $dataRow;
+		$this->data_rows[] = $dataRow;
 	  }
 	}
 	return $this;
@@ -94,6 +105,8 @@ class Reporting extends Tracking {
    * @return $this
    */
   public function tracking_reporting_detail($detail_level = self::TRACKINGREPORTING_DETAIL_LEVEL1, $conditions, $column=NULL, $order="ASC"){
+
+    global $base_url;
 
 	switch($detail_level){
 
@@ -129,18 +142,25 @@ class Reporting extends Tracking {
 			$dataRow['events'] = $row->count . ' ' . $conditions['track_type'] . "s";
 			$dataRow['last'] = date("D d-M-Y H:i", strtotime($row->timestamp));
 
-			$action = '<a href=":link" title=":tip"><i class="fa fa-times" style="color:red"></i>&nbsp;Delete :user\'s :types</a>';
-			if($conditions['track_type']=="click") $action .= ' |&nbsp;<a href=":link2" title=":tip2"><i class="fa fa-search"></i>&nbsp;Drill-down</a>';
-			$dataRow['actions'] = new FormattableMarkup($action,
-			  array(
-			    ':type'=>$conditions['track_type'],
-			    ':user'=>$row->user,
-			    ':tip' => 'Delete all tracked '.$row->source.' '.$conditions['track_type'].'\'s for '.$row->user.' for campaign '.$row->campaign_id,
-			    ':link' => '/admin/secure/trackingdelete/'.$conditions['track_type'].'/'.$row->userid.'/'.$row->campaign_id.'/'.$conditions['source'],
-				':tip2' => 'Report on destination URL\'s for '.$row->user.' clicks for this campaign' ,
-				':link2' => '/admin/reports/clicktracking/' . self::TRACKINGREPORTING_DETAIL_LEVEL2 . '/click/' . $row->campaign_id . '/' . $conditions['source'] . '/' . $row->userid
-			  )
+			$btn = array(
+			  '#type' => 'form',
+			  'button' => array(
+				'#type'=>'dropbutton',
+				'#links'=> array(),
+			  ),
 			);
+			if($conditions['track_type']=="click") {
+			  $btn['button']['#links']['details'] = array(
+				'title' => new FormattableMarkup('<i class="fa fa-search"></i> Details', array()),
+				'url' => Url::fromUri($base_url . '/admin/reports/clicktracking/' . self::TRACKINGREPORTING_DETAIL_LEVEL2 . '/click/' . $row->campaign_id . '/' . $conditions['source'] . '/' . $row->userid),
+			  );
+			}
+			$btn['button']['#links']['delete']=array(
+			  'title'=>new FormattableMarkup('<i class="fa fa-times" style="color:red"></i> Delete Entry', array()),
+			  'url'=>Url::fromUri($base_url.'/admin/secure/trackingdelete/'.$conditions['track_type'].'/'.$row->userid.'/'.$row->campaign_id.'/'.$conditions['source']),
+			);
+			$dataRow['actions'] =  \Drupal::service('renderer')->render($btn);
+
 			$this->data_rows[] = $dataRow;
 		  }
 		}
@@ -178,14 +198,20 @@ class Reporting extends Tracking {
 			$dataRow['url'] = $row->destinationURL;
 			$dataRow['events'] = $row->count . ' ' . $conditions['track_type'] . "s";
 			$dataRow['last'] = date("D d-M-Y H:i", strtotime($row->timestamp));
-			$dataRow['actions'] = new FormattableMarkup('<a href=":link" title=":tip"><i class="fa fa-times" style="color:red"></i>&nbsp;Delete :user\'s :types to this destination</a>',
-			  array(
-				':type'=>$conditions['track_type'],
-				':user'=>$row->user,
-				':tip' => 'Delete all tracked '.$row->source.' '.$conditions['track_type'].'\'s for '.$row->user.' for campaign '.$row->campaign_id,
-				':link' => '/admin/secure/trackingdelete/'.$conditions['track_type'].'/'.$row->userid.'/'.$row->campaign_id.'/'.$conditions['source'].'?url='.urlencode($row->destinationURL),
-			  )
+			$btn = array(
+			  '#type' => 'form',
+			  'button' => array(
+				'#type'=>'dropbutton',
+				'#links'=> array(
+				  'delete'=>array(
+					'title'=>new FormattableMarkup('<i class="fa fa-times" style="color:red"></i> Delete Entry', array()),
+					'url'=>Url::fromUri($base_url.'/admin/secure/trackingdelete/'.$conditions['track_type'].'/'.$row->userid.'/'.$row->campaign_id.'/'.$conditions['source'].'?url='.urlencode($row->destinationURL)),
+				  ),
+				),
+			  ),
 			);
+			$dataRow['actions'] =  \Drupal::service('renderer')->render($btn);
+
 			$this->data_rows[] = $dataRow;
 		  }
 		  $this->username=($row->user == "" ? "Anonymous":$row->user);
