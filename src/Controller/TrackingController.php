@@ -409,8 +409,8 @@ class TrackingController extends ControllerBase {
 	&lt;/a></code></b></pre>
 					This will show a clickable image which records both when it is shown and also when it is clicked.
                     </li>
-                    <li>If the views expose tables module is loaded (<a href="/admin/structure/views/expose_tables">admin/structure/views/expose_tables</a>) 
-                    then you can make the database tables tm_tracking and tm_tracking_log available to the views module at <a href="/admin/structure/views">admin/structure/views</a></a></li>
+                    <li>If the views module is enabled (<a href="/admin/structure/views">admin/structure/views</a>) 
+                    then you can use the collected tracking data for custom analysis. </li>
                 </ol></p>',$params),
 	  	),
 	  ),
